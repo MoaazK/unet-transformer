@@ -12,10 +12,11 @@ import torchmetrics
 matplotlib.use('Agg')
 
 from data.make_dataset import ImageDataset
-from models import UNet, AttentionUNet
+from models import UNet, AttentionUNet, TransformerUNet
 
 def train_model(model, train_loader, val_loader, criterion, epochs, optimizer, device):
-    best_model = copy.deepcopy(model)
+    # best_model = copy.deepcopy(model)
+    best_model = model
     train_losses = []
     val_losses = []
     best_acc = 0
@@ -58,7 +59,8 @@ def train_model(model, train_loader, val_loader, criterion, epochs, optimizer, d
         val_losses.append(val_loss / total)
         if val_acc > best_acc:
             best_acc = val_acc
-            best_model = copy.deepcopy(model)
+            # best_model = copy.deepcopy(model)
+            best_model = model
     
     return best_model, train_losses, val_losses
 
@@ -80,9 +82,10 @@ def plot_losses(train_losses, val_losses):
 if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     print(f'Using device: {device}')
-    model = AttentionUNet((1, 32, 64, 128, 256, 512, 1024), True).to(device)
+    model = TransformerUNet(128, (1, 32, 64, 128, 256, 512, 1024), True, 2).to(device)
+    # model = UNet((1, 32, 64, 128, 256, 512, 1024), True).to(device)
     # print(model)
-    # summary(model, (1, 256, 256), 4)
+    summary(model, (1, 256, 256), 4)
     train_dataset = ImageDataset("data/raw/Br35H-Mask-RCNN/TRAIN", "data/raw/Br35H-Mask-RCNN/TRAIN_MASK")
     val_dataset = ImageDataset("data/raw/Br35H-Mask-RCNN/VAL", "data/raw/Br35H-Mask-RCNN/VAL_MASK")
     train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, num_workers=4)
@@ -91,6 +94,6 @@ if __name__ == "__main__":
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     epochs = 1
-    best_model, train_losses, val_losses = train_model(model, train_loader, val_loader, criterion, epochs, optimizer, device)
+    # best_model, train_losses, val_losses = train_model(model, train_loader, val_loader, criterion, epochs, optimizer, device)
     # plot_losses(train_losses, val_losses)
     # torch.save(best_model, "best_model.pt")
