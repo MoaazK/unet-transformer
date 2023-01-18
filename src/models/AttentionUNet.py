@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .EncoderDecoder import *
+from models.EncoderDecoder import ConvBlock, EncoderLayer, DecoderLayer
 
 class AttentionUNet(nn.Module):
     def __init__(self, channels: Tuple[int], is_residual: bool = False, bias = False) -> None:
@@ -45,7 +45,7 @@ class AttentionGate(nn.Module):
         )
 
         self.psi = nn.Sequential(
-            nn.Conv2d(F_int, 1, 1, bias=bias).apply(lambda m: nn.init.xavier_uniform_(m.weight)),
+            nn.Conv2d(F_int, 1, 1, bias=bias).apply(lambda m: nn.init.xavier_uniform_(m.weight.data)),
             nn.BatchNorm2d(1)
         )
 
@@ -55,7 +55,7 @@ class AttentionGate(nn.Module):
         self.final_conv = nn.Sequential(
             nn.Conv2d(F_l, F_int, 1, bias=bias),
             nn.BatchNorm2d(F_int),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
     def forward(self, x: torch.Tensor, g: torch.Tensor) -> torch.Tensor:
@@ -63,7 +63,7 @@ class AttentionGate(nn.Module):
         theta_x = self.W_x(x)
 
         theta_x = torch.add(phi_g, theta_x)
-        theta_x = F.relu(theta_x, inplace=True)
+        theta_x = F.relu(theta_x)
         theta_x = self.psi(theta_x)
         theta_x = torch.sigmoid(theta_x)
         theta_x = self.upsample(theta_x)

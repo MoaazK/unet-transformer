@@ -2,12 +2,10 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 
-from .EncoderDecoder import *
-# from src.utils.config import *
+from utils import config
+from models.EncoderDecoder import ConvBlock, EncoderLayer, DecoderLayer
 
-# DEVICE = get_device()
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DTYPE = torch.float32
+DEVICE = config.get_device()
 
 class TransformerUNet(nn.Module):
     def __init__(self, channels: Tuple[int], is_residual: bool = False, num_heads = 2, bias = False) -> None:
@@ -60,19 +58,19 @@ class MultiHeadCrossAttention(nn.Module):
             nn.MaxPool2d(2),
             nn.Conv2d(channel_S, channel_S, 1, bias=bias),
             nn.BatchNorm2d(channel_S),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         self.conv_Y = nn.Sequential(
             nn.Conv2d(channel_Y, channel_S, 1, bias=bias),
             nn.BatchNorm2d(channel_S),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         self.mha = nn.MultiheadAttention(embed_dim, num_heads, bias=bias, batch_first=True)
 
         self.upsample = nn.Sequential(
-            nn.Conv2d(channel_S, channel_S, 1, bias=bias),
+            nn.Conv2d(channel_S, channel_S, 1, bias=bias).apply(lambda m: nn.init.xavier_uniform_(m.weight.data)),
             nn.BatchNorm2d(channel_S),
             nn.Sigmoid(),
             nn.ConvTranspose2d(channel_S, channel_S, 2, 2, bias=bias)
@@ -110,8 +108,8 @@ class PositionalEncoding(nn.Module):
     def positional_encoding(self, length: int, depth: int) -> torch.Tensor:
         depth = depth / 2
 
-        positions = torch.arange(length, dtype=DTYPE, device=DEVICE)
-        depths = torch.arange(depth, dtype=DTYPE, device=DEVICE) / depth
+        positions = torch.arange(length, dtype=config.DTYPE, device=DEVICE)
+        depths = torch.arange(depth, dtype=config.DTYPE, device=DEVICE) / depth
 
         angle_rates = 1 / (10000**depths)
         angle_rads = torch.einsum('i,j->ij', positions, angle_rates)

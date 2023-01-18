@@ -9,7 +9,7 @@ class ConvBlock(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, 3, padding=1, bias=bias),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
         
         self.conv2 = nn.Sequential(
@@ -35,7 +35,7 @@ class ConvBlock(nn.Module):
             x_shortcut = self.conv_skip(x_shortcut)
             x = torch.add(x, x_shortcut)
 
-        x = F.relu(x, inplace=True)
+        x = F.relu(x)
 
         return x
 

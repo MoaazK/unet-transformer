@@ -2,7 +2,7 @@ from typing import List, Tuple
 import torch
 import torch.nn as nn
 
-from .EncoderDecoder import *
+from models.EncoderDecoder import ConvBlock, EncoderLayer, DecoderLayer
 
 class UNet(nn.Module):
     def __init__(self, channels: Tuple[int], is_residual: bool = False, bias = False) -> None:
