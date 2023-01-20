@@ -159,7 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-data/raw/
-data/archive.zip
+data/raw/*
+data/processed/*
+!/**/.gitkeep
 best_model.pt
 .vscode
