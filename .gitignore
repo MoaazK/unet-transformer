@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 data/raw/
+data/archive.zip
 best_model.pt
 .vscode

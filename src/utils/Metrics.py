@@ -16,7 +16,16 @@ class Metrics():
         # self.auprc = AveragePrecision().to(device=device)
 
         self.num_classes = num_classes
-        self.metrics_history = []
+        self.metrics_history = {}
+        self.metrics_history[ACCURACY] = []
+        self.metrics_history[DICE_SCORE] = []
+        self.metrics_history[JACCARD_INDEX] = []
+        self.metrics_history[PRECISION] = []
+        self.metrics_history[RECALL] = []
+        self.metrics_history[SPECIFICITY] = []
+        self.metrics_history[F1_SCORE] = []
+        # self.metrics_history[AUROC_] = []
+        # self.metrics_history[AUPRC] = []
 
     def reset(self) -> None:
         self.accuracy.reset()
@@ -58,7 +67,16 @@ class Metrics():
         # metric_dict[AUROC_] = self.auroc.compute()
         # metric_dict[AUPRC] = self.auprc.compute()
 
-        self.metrics_history.append(metric_dict)
+        self.metrics_history[ACCURACY].append(metric_dict[ACCURACY].cpu())
+        self.metrics_history[DICE_SCORE].append(metric_dict[DICE_SCORE].cpu())
+        self.metrics_history[JACCARD_INDEX].append(metric_dict[JACCARD_INDEX].cpu())
+        self.metrics_history[PRECISION].append(metric_dict[PRECISION].cpu())
+        self.metrics_history[RECALL].append(metric_dict[RECALL].cpu())
+        self.metrics_history[SPECIFICITY].append(metric_dict[SPECIFICITY].cpu())
+        self.metrics_history[F1_SCORE].append(metric_dict[F1_SCORE].cpu())
+        # self.metrics_history[AUROC_].append(metric_dict[AUROC_].cpu())
+        # self.metrics_history[AUPRC].append(metric_dict[AUPRC].cpu())
+        
         return metric_dict
 
     def get_metrics(self) -> list:

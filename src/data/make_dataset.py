@@ -16,9 +16,9 @@ class ImageDataset(Dataset):
         self.source_paths = sorted(make_dataset(source_root))
         self.target_paths = sorted(make_dataset(target_root))
         self.source_transforms = transforms.Compose([transforms.ToTensor(),
-                                transforms.Resize((128,128))]) # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+                                transforms.Resize((256, 256))]) # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
         self.target_transforms = transforms.Compose([transforms.ToTensor(),
-                                transforms.Resize((128,128), InterpolationMode.NEAREST)]) # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
+                                transforms.Resize((256, 256), InterpolationMode.NEAREST)]) # transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
         
     def __len__(self):
         return len(self.source_paths)
