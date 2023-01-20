@@ -21,7 +21,6 @@ def train(
     loss_total = 0
     avg_sum = 0
     train_loss = []
-    model.to(device=device)
     model.train()
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc='Training  ')
@@ -50,5 +49,4 @@ def train(
             IoU=f'{metric_dict[JACCARD_INDEX]:.4f}'
         )
 
-        # print(f'Loss: {train_losses[-1]:.4f} | Accuracy: {metric_dict[ACCURACY]:.4f} | Dice: {metric_dict[DICE_SCORE]} | IoU: {metric_dict[JACCARD_INDEX]:.4f}')
     return train_loss, loss_sum / loss_total

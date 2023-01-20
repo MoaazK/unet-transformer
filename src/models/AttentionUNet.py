@@ -16,6 +16,8 @@ class AttentionUNet(nn.Module):
         self.decode = nn.ModuleList([DecoderLayer(channels[i + 1], channels[i], is_residual, bias) for i in reversed(range(1, len(channels) - 1))])
         self.output = nn.Conv2d(channels[1], 1, 1)
 
+        self.init_weights()
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip_x_list: List[torch.Tensor] = []
         for i in range(len(self.channels) - 2):
@@ -29,6 +31,13 @@ class AttentionUNet(nn.Module):
             x = self.decode[i](skip_x, x)
 
         return self.output(x)
+    
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_uniform_(m.weight.data)
+                if m.bias is not None:
+                    m.bias.data.fill_(0.1)
 
 class AttentionGate(nn.Module):
     def __init__(self, F_g: int, F_l: int, F_int: int, bias=False) -> None:

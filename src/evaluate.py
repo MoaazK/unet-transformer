@@ -20,7 +20,6 @@ def evaluate(
     total = 0
     all_loss = 0
     avg_sum = 0
-    model.to(device=device)
     model.eval()
 
     pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc='Validation')
