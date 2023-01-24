@@ -1,3 +1,4 @@
+import os
 import copy
 import torch
 import torch.nn as nn
@@ -20,7 +21,9 @@ class Solver:
         val_loader: DataLoader,
         criterion: nn.Module,
         optimizer: torch.optim.Optimizer,
-        scheduler: object = None) -> None:
+        scheduler: object = None,
+        model_name: str = 'UNet',
+        model_path: str = None) -> None:
 
         self.epochs = epochs
         self.device = device
@@ -36,13 +39,18 @@ class Solver:
         self.train_loss_history = []
         self.val_loss_history = []
         self.train_loss_batch = []
+        self.best_val_loss = 100
+        self.best_train_loss = 100
 
-        self.best_model = copy.deepcopy(self.model)
+        self.best_model = None
         self.best_dice_score = 0.0
+
+        self.model_name = model_name
+        self.model_path = model_path
 
     def fit(self):
         for epoch in range(1, self.epochs + 1):
-            print(f'Epoch {epoch}/{self.epochs}')
+            print(f'{self.model_path} - Epoch {epoch}/{self.epochs}')
 
             self.train_metrics.reset()
             self.val_metrics.reset()
@@ -56,15 +64,26 @@ class Solver:
             train_agg_metrics = self.train_metrics.compute()
             val_agg_metrics = self.val_metrics.compute()
 
-            if not self.scheduler:
-                self.scheduler.step(self.val_loss_history[-1])
+            if self.scheduler:
+                self.scheduler.step()
 
-            if val_agg_metrics[DICE_SCORE] > self.best_dice_score:
-                self.best_dice_score = val_agg_metrics[DICE_SCORE]
-                self.best_model = copy.deepcopy(self.model)
+            # if val_agg_metrics[DICE_SCORE] > self.best_dice_score:
+            # torch.save(self.model, f'saved_models/{self.model_name}/temp/best.pt')
+            # self.best_model = torch.load(f'saved_models/{self.model_name}/temp/best.pt')
+            mpath = f'../saved_models/{self.model_name}/{self.model_path}'
+            if not os.path.exists(mpath):
+                os.makedirs(mpath)
+            mpath = f'{mpath}/{epoch}'
+            mpath = f'{mpath}_TDice_{train_agg_metrics[DICE_SCORE]:.4f}_VDice_{val_agg_metrics[DICE_SCORE]:.4f}'
+            mpath = f'{mpath}_TLoss_{t2:.4f}_VLoss_{self.val_loss_history[-1]:.4f}.pt'
+            torch.save(self.model, mpath)
+            self.best_dice_score = val_agg_metrics[DICE_SCORE]
+            # self.best_model = copy.deepcopy(self.model)
+            self.best_val_loss = self.val_loss_history[-1]
+            self.best_train_loss = t2
 
             print(f'Training   - Accuracy: {train_agg_metrics[ACCURACY]:.4f} | Dice: {train_agg_metrics[DICE_SCORE]:.4f} | IoU: {train_agg_metrics[JACCARD_INDEX]:.4f} | Loss: {t2:.4f}')
-            print(f'Validation - Accuracy: {val_agg_metrics[ACCURACY]:.4f} | Dice: {val_agg_metrics[DICE_SCORE]:.4f} | IoU: {val_agg_metrics[JACCARD_INDEX]:.4f} | Loss: {self.train_loss_batch[-1]:.4f}')
+            print(f'Validation - Accuracy: {val_agg_metrics[ACCURACY]:.4f} | Dice: {val_agg_metrics[DICE_SCORE]:.4f} | IoU: {val_agg_metrics[JACCARD_INDEX]:.4f} | Loss: {self.val_loss_history[-1]:.4f}')
             print()
 
     def train(
@@ -82,10 +101,10 @@ class Solver:
         train_loss = []
         model.train()
 
-        pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc='Training  ')
+        pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc='Training')
         for batch_idx, (X, Y) in pbar:
             optimizer.zero_grad()
-            X, Y = Variable(X.to(device=device)), Y.to(device=device)
+            X, Y = Variable(X.to(device=device)), Y.to(device='cuda:0')
             batch_size = X.size(0)
 
             logits: torch.Tensor = model(X)
@@ -103,14 +122,13 @@ class Solver:
             metric_dict = metrics.update(logits, Y)
             pbar.set_postfix(
                 Loss=f'{train_loss[-1]:.4f}',
-                Accuracy=f'{metric_dict[ACCURACY]:.4f}',
+                Acc=f'{metric_dict[ACCURACY]:.4f}',
                 Dice=f'{metric_dict[DICE_SCORE]:.4f}',
                 IoU=f'{metric_dict[JACCARD_INDEX]:.4f}'
             )
 
         return train_loss, loss_sum / loss_total
 
-    @staticmethod
     @torch.inference_mode()
     def evaluate(
         self,
@@ -128,7 +146,7 @@ class Solver:
 
         pbar = tqdm(enumerate(dataloader), total=len(dataloader), desc=decsription)
         for batch_idx, (X, Y) in pbar:
-            X, Y = Variable(X.to(device=device)), Y.to(device=device)
+            X, Y = X.to(device=device), Y.to(device='cuda:0')
             batch_size = X.size(0)
 
             logits: torch.Tensor = model(X)
@@ -143,7 +161,7 @@ class Solver:
             metric_dict = metrics.update(logits, Y)
             pbar.set_postfix(
                 Loss=f'{avg_sum / (batch_idx + 1):.4f}',
-                Accuracy=f'{metric_dict[ACCURACY]:.4f}',
+                Acc=f'{metric_dict[ACCURACY]:.4f}',
                 Dice=f'{metric_dict[DICE_SCORE]:.4f}',
                 IoU=f'{metric_dict[JACCARD_INDEX]:.4f}'
             )

@@ -8,7 +8,7 @@ from models.EncoderDecoder import ConvBlock, EncoderLayer, DecoderLayer
 DEVICE = config.get_device()
 
 class TransformerUNet(nn.Module):
-    def __init__(self, channels: Tuple[int], is_residual: bool = False, num_heads = 2, bias = False) -> None:
+    def __init__(self, channels: Tuple[int], num_heads = 2, is_residual: bool = False, bias = False) -> None:
         super(TransformerUNet, self).__init__()
 
         self.channels = channels
@@ -55,9 +55,9 @@ class MultiHeadSelfAttention(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, c, h, w = x.size()
-        x = x.permute(0, 2, 3, 1).reshape((b, h * w, c))
+        x = x.permute(0, 2, 3, 1).view((b, h * w, c))
         x, _ = self.mha(x, x, x, need_weights=False)
-        return x.reshape((b, h, w, c)).permute(0, 3, 1, 2)
+        return x.view((b, h, w, c)).permute(0, 3, 1, 2)
 
 class MultiHeadCrossAttention(nn.Module):
     def __init__(self, embed_dim: int, num_heads: int, channel_S: int, channel_Y: int, bias=False) -> None:
@@ -91,13 +91,13 @@ class MultiHeadCrossAttention(nn.Module):
         y = self.conv_Y(y)
 
         b, c, h, w = s.size()
-        s = s.permute(0, 2, 3, 1).reshape((b, h * w, c))
+        s = s.permute(0, 2, 3, 1).view((b, h * w, c))
 
         b, c, h, w = y.size()
-        y = y.permute(0, 2, 3, 1).reshape((b, h * w, c))
+        y = y.permute(0, 2, 3, 1).view((b, h * w, c))
 
         y, _ = self.mha(y, y, s, need_weights=False)
-        y = y.reshape((b, h, w, c)).permute(0, 3, 1, 2)
+        y = y.view((b, h, w, c)).permute(0, 3, 1, 2)
         
         y = self.upsample(y)
 
@@ -111,8 +111,8 @@ class PositionalEncoding(nn.Module):
         b, c, h, w = x.size()
         pos_encoding = self.positional_encoding(h * w, c)
         pos_encoding = pos_encoding.permute(1, 0).unsqueeze(0).repeat(b, 1, 1)
-        x = x.reshape((b, c, h * w)) + pos_encoding
-        return x.reshape((b, c, h, w))
+        x = x.view((b, c, h * w)) + pos_encoding
+        return x.view((b, c, h, w))
 
     def positional_encoding(self, length: int, depth: int) -> torch.Tensor:
         depth = depth / 2

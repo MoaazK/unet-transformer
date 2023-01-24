@@ -161,6 +161,9 @@ cython_debug/
 
 data/raw/*
 data/processed/*
+reports/*
+saved_models/*
 !/**/.gitkeep
+jupyter_submit.sh
 best_model.pt
 .vscode
