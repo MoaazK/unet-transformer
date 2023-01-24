@@ -1,5 +1,5 @@
 # UTransformer: Semantic Segmentation with PyTorch
-![alt text](https://github.com/MoaazK/comp511-project/blob/master/assets/result.png?raw=true)
+![Results](https://github.com/MoaazK/comp511-project/blob/master/assets/result.png?raw=true)
 
 Implementation of the [U-Net Transformer](https://arxiv.org/abs/2103.06104) and comparison with [Attention U-Net](https://arxiv.org/abs/1804.03999) and baseline [U-Net](https://arxiv.org/abs/1505.04597)
 
@@ -82,4 +82,5 @@ This model can easily be extended for multiclass classification. Moreover, I wro
 Olivier Petit, Nicolas Thome, Clément Rambour, Luc Soler:
 
 [U-Net Transformer: Self and Cross Attention for Medical Image Segmentation](https://arxiv.org/abs/2103.06104)
-![alt text](https://github.com/MoaazK/comp511-project/blob/master/assets/architecture.png?raw=true)
+
+![UTransformer Network Architecture](https://github.com/MoaazK/comp511-project/blob/master/assets/architecture.png?raw=true)
