@@ -10,6 +10,5 @@ torchmetrics == 0.10.3
 torchaudio == 0.12.1
 torchsummary == 1.5.1
 opencv-python == 4.6.0.66
-einops == 0.6.0
 ipykernel == 6.20.1
 jupyter == 1.0.0
