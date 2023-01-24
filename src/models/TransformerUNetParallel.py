@@ -13,13 +13,13 @@ class TransformerUNetParallel(nn.Module):
 
         self.channels = channels
         self.cuda_cores = [f'cuda:{i+1}' for i in reversed(range(1, len(channels) - 1))]
-        self.pos_encoding = PositionalEncoding().to('cuda:0')
+        # self.pos_encoding = PositionalEncoding().to('cuda:0')
         self.encode = nn.ModuleList([EncoderLayer(channels[i], channels[i + 1], is_residual, bias).to('cuda:6') for i in range(len(channels) - 2)])
         self.bottle_neck = ConvBlock(channels[-2], channels[-1], is_residual, bias).to('cuda:6')
-        # self.pos_embed_mhsa = nn.Parameter(torch.randn(1, channels[-1], image_size // (2**(len(channels) - 2)), image_size // (2**(len(channels) - 2)))).to('cuda:6')
+        self.pos_embed_mhsa = nn.Parameter(torch.randn(1, channels[-1], image_size // (2**(len(channels) - 2)), image_size // (2**(len(channels) - 2)))).to('cuda:6')
         self.mhsa = MultiHeadSelfAttention(channels[-1], num_heads, bias).to('cuda:1')
-        # self.pos_embed_x = nn.ParameterList([nn.Parameter(torch.randn(1, channels[i + 1], image_size // (2**i), image_size // (2**i))).to('cuda:0') for i in reversed(range(1, len(channels) - 1))])
-        # self.pos_embed_skip_x = nn.ParameterList([nn.Parameter(torch.randn(1, channels[i], image_size // (2**(i - 1)), image_size // (2**(i - 1)))).to('cuda:0') for i in reversed(range(1, len(channels) - 1))])
+        self.pos_embed_x = nn.ParameterList([nn.Parameter(torch.randn(1, channels[i + 1], image_size // (2**i), image_size // (2**i))).to('cuda:0') for i in reversed(range(1, len(channels) - 1))])
+        self.pos_embed_skip_x = nn.ParameterList([nn.Parameter(torch.randn(1, channels[i], image_size // (2**(i - 1)), image_size // (2**(i - 1)))).to('cuda:0') for i in reversed(range(1, len(channels) - 1))])
         self.mhca = nn.ModuleList([MultiHeadCrossAttention(channels[i], num_heads, channels[i], channels[i + 1], bias).to(f'cuda:{i+1}') for i in reversed(range(1, len(channels) - 1))])
         self.decode = nn.ModuleList([DecoderLayer(channels[i + 1], channels[i], is_residual, bias).to('cuda:7') for i in reversed(range(1, len(channels) - 1))])
         self.output = nn.Conv2d(channels[1], 1, 1).to('cuda:0')
@@ -33,15 +33,15 @@ class TransformerUNetParallel(nn.Module):
             skip_x_list.append(skip_x)
 
         x = self.bottle_neck(x.to('cuda:6'))
-        x = self.pos_encoding(x.to('cuda:0'))
-        # x = x.to('cuda:6') + self.pos_embed_mhsa
+        # x = self.pos_encoding(x.to('cuda:0'))
+        x = x.to('cuda:6') + self.pos_embed_mhsa
         x = self.mhsa(x.to('cuda:1'))
 
         for i, skip_x in enumerate(reversed(skip_x_list)):
-            x = self.pos_encoding(x.to('cuda:0'))
-            skip_x = self.pos_encoding(skip_x.to('cuda:0'))
-            # x = x.to('cuda:0') + self.pos_embed_x[i]
-            # skip_x = skip_x.to('cuda:0') + self.pos_embed_skip_x[i]
+            # x = self.pos_encoding(x.to('cuda:0'))
+            # skip_x = self.pos_encoding(skip_x.to('cuda:0'))
+            x = x.to('cuda:0') + self.pos_embed_x[i]
+            skip_x = skip_x.to('cuda:0') + self.pos_embed_skip_x[i]
             skip_x = self.mhca[i](skip_x.to(self.cuda_cores[i]), x.to(self.cuda_cores[i]))
             x = self.decode[i](skip_x.to('cuda:7'), x.to('cuda:7'))
 
