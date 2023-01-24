@@ -5,7 +5,7 @@ Implementation of the [U-Net Transformer](https://arxiv.org/abs/2103.06104) and 
 
 - [Quick Start](#quick-start)
 - [Description](#description)
-- [Training & Hardware](#training)
+- [Training & Hardware](#training-hardware)
 - [Results](#results)
 - [Requirements](#requirements)
 - [Data](#data)
